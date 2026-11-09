@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22', '24']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      # No dependencies: the plugin runs on the harness's own Node runtime, so
+      # lint is a real parse of every module and the tests are node:test files.
+      - name: Lint (parse every module)
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Verify the publishable file list
+        run: npm run build
+
+  metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: package.json version matches the newest CHANGELOG entry
+        run: node .github/scripts/check-version.mjs
+
+      - name: Every file package.json promises exists
+        run: node .github/scripts/check-files.mjs

@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to (re)publish a release for, e.g. v0.1.0
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      # A release never ships code that does not pass its own checks.
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Resolve the tag
+        id: tag
+        run: echo "name=${{ inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+
+      - name: Tag must match package.json version
+        run: node .github/scripts/check-version.mjs "${{ steps.tag.outputs.name }}"
+
+      - name: Build the installable tarball
+        id: pack
+        run: |
+          set -euo pipefail
+          file=$(npm pack --silent)
+          echo "file=$file" >> "$GITHUB_OUTPUT"
+
+      - name: Extract this version's changelog section
+        run: node .github/scripts/release-notes.mjs "${{ steps.tag.outputs.name }}" > RELEASE_NOTES.md
+
+      - name: Publish the GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          tag='${{ steps.tag.outputs.name }}'
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release edit "$tag" --notes-file RELEASE_NOTES.md --title "$tag"
+            gh release upload "$tag" '${{ steps.pack.outputs.file }}' --clobber
+          else
+            gh release create "$tag" '${{ steps.pack.outputs.file }}' \
+              --title "$tag" --notes-file RELEASE_NOTES.md
+          fi

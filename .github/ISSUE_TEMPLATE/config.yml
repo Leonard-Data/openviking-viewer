@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: DeepSeek Harness
+    url: https://github.com/Leonard-Data/deepseek-harness
+    about: Questions about the harness itself rather than this plugin.
+  - name: DSH plugin list
+    url: https://github.com/Leonard-Data/awesome-dsh-plugin
+    about: Other plugins for the harness.

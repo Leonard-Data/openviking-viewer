@@ -1,0 +1,7 @@
+# OpenViking viewer bundle: one Host row that also ships the Web-page client half.
+# The row accepts an optional connection override; without one the viewer reads
+# the same OPENVIKING_* environment and ~/.openviking/*.conf files the memory
+# plugin uses, so both stay pointed at one server.
+- insert:
+    - id: openviking-viewer
+      name: '@local/openviking-viewer'
