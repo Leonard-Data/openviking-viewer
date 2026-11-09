@@ -55,7 +55,7 @@
   },
   "scripts": {
     "lint": "node --check index.js && node --check client.js",
-    "test": "node --test \"test/*.test.mjs\"",
+    "test": "node --test test/*.test.mjs",
     "build": "npm pack --dry-run",
     "check:version": "node .github/scripts/check-version.mjs",
     "check:files": "node .github/scripts/check-files.mjs"
